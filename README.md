@@ -23,4 +23,8 @@ Datool is a tool made to manipulate container files from OkamiHD. This tool have
 To learn more about the program's interface, i recommend watching this tutorial which shows how to change skin textures using Datool:
 [![](https://github.com/user-attachments/assets/56a70c1b-825f-4ef1-8ff4-c686389ab9ef)](https://www.youtube.com/watch?v=ca5_WjOXNxc)
 
+# DDSUtility
+<img width="1150" height="648" alt="image" src="https://github.com/user-attachments/assets/0f8c7b31-6abd-4b20-a2f4-3ac0514135a9" />
 
+
+DDSUtility is a tool made to convert PNGs into DDS files that okami supports. It supports batch processing, as in you just drag multiple PNG files, or DDS files onto the program interface, and they will be converted automatically.
