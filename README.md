@@ -3,7 +3,7 @@
 
 # Thanks to:
 ## * Zwippie - Testing, Ideas
-## * Kayya - Research
+## * Kayya - Research - https://github.com/Telethia
 
 
 
