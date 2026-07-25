@@ -9,7 +9,7 @@ func on_files_dropped(files:PackedStringArray):
 		var allow:bool = false
 		var s:String = "*." + f.get_extension()
 		for i:Array in DAT.supported_file_types:
-			if i[0] == s || s == "*.dbp":
+			if i[0].to_lower() == s.to_lower() || s.to_lower() == "*.dbp":
 				allow = true
 				break
 		if allow:

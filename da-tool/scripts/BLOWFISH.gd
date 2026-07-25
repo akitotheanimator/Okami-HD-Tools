@@ -333,18 +333,22 @@ func encrypt_bytes(data:PackedByteArray) -> PackedByteArray:
 
 func decrypt_bytes(data:PackedByteArray) -> PackedByteArray:
 	assert(data.size() % BLOCK_SIZE == 0)
-
+	
 	var out:PackedByteArray = PackedByteArray()
 	out.resize(data.size())
+
 
 	for i:int in range(0, data.size(), 8):
 		var L:int = _read_u32(data, i)
 		var R:int = _read_u32(data, i + 4)
-
+		
 		_decrypt_block(L, R)
 
 		_write_u32(out, i, tempL)
 		_write_u32(out, i + 4, tempR)
+		if i % 4096 == 0:
+			print(float(i) / float(data.size()))
+		#print(i)
 
 	return out
 	

@@ -8,7 +8,7 @@ var save_dat_cont:bool = true
 
 var dat_data_array:Array = [] #this is slow but, ehh... DAT files are usually small so i don't think this will be a problem for now.
 
-var supported_file_types:Array[PackedStringArray] = [["*.dat","Data container"], ["*.ddp","Texture Container"], ["*.bin","Unknown"]]
+var supported_file_types:Array[PackedStringArray] = [["*.dat","Data container"], ["*.ddp","Texture Container"], ["*.bin","Unknown"], ["*.tbl","Data container"], ["*.idd","Data container"]]
 var BASE_PATH:String = ""
 var BASE_EXT:String = ""
 var FLAG_INFO:PackedInt32Array = []
@@ -101,13 +101,21 @@ func load_data_package_from_memory(PATH:String,f:StreamPeerBuffer) -> void:
 	
 	var file_sdata:Array[Array] = [] #the offets NEEDS to be sorted because some offsets can be blank. I know that because ive been on the god hand modding community for enough time
 	file_sdata.resize(file_count)
+	var last_offset:int = 0
 	for i:int in range(file_count):
 		var offset:int = f.get_u32()
-		file_sdata[i] = [offset,""]
+		if offset != 0:
+			last_offset = offset
+			file_sdata[i] = [offset,""]
+		else:
+			file_sdata[i] = [last_offset,""]
 	var RESERVE_FINAL_FILE:int = f.get_32() #this is the ROF file we will be purposefully skipping
 	for i:int in range(file_count):
 		var data:Array = f.get_data(4)
 		file_sdata[i][1] = data[1].get_string_from_ascii()
+		if file_sdata[i][1] == "":
+			file_sdata[i][1] = "UNKNWON_FORMAT"
+		print(file_sdata[i][1])
 	
 	f.get_32()
 	FLAG_INFO[0] = f.get_32() #the flags...
@@ -116,9 +124,9 @@ func load_data_package_from_memory(PATH:String,f:StreamPeerBuffer) -> void:
 	FLAG_INFO[3] = f.get_32()
 	FLAG_INFO[4] = f.get_32() #are now OVER WOHOOOO
 	
-	for i:int in range(file_sdata.size() - 1, -1, -1): #remove invalid offsets and types
-		if file_sdata[i][0] == 0 || file_sdata[i][1] == "":
-			file_sdata.remove_at(i)
+	#for i:int in range(file_sdata.size() - 1, -1, -1): #remove invalid offsets and types
+	#	if file_sdata[i][0] == 0 || file_sdata[i][1] == "":
+	#		file_sdata.remove_at(i)
 
 	file_sdata.sort_custom(func(a,b) -> bool:
 		return a[0] < b[0])
@@ -137,7 +145,10 @@ func load_data_package_from_memory(PATH:String,f:StreamPeerBuffer) -> void:
 		
 		
 		var SPB:StreamPeerBuffer = StreamPeerBuffer.new()
-		SPB.data_array = f.get_data(file_sdata[i + 1][0] - file_sdata[i][0] - 32)[1]
+		if file_sdata[i][1] != "UNKNWON_FORMAT":
+			SPB.data_array = f.get_data(file_sdata[i + 1][0] - file_sdata[i][0] - 32)[1]
+		else:
+			SPB.data_array = f.get_data(0)[1]
 		dat_data_array[i] = [file_sdata[i][1],HEADER.data_array,SPB.data_array]
 			
 			
@@ -197,6 +208,9 @@ func save_file(path:String,encrypted:bool) -> void:
 		var align_4:Callable = func():
 			while f.get_position() % 4 != 0:
 				f.put_8(0)
+		var align_8:Callable = func():
+			while f.get_position() % 8 != 0:
+				f.put_8(0)
 		var align_32:Callable = func():
 			while f.get_position() % 32 != 0:
 				f.put_8(0)
@@ -210,10 +224,14 @@ func save_file(path:String,encrypted:bool) -> void:
 		var ROF_OFFSET:int = f.get_position()
 		f.put_32(0)
 		
-		
+		#print(dat_data_array)
 		for i:Array in dat_data_array:
+			#print(i[0])
 			print(i[0])
-			f.put_data(i[0].to_ascii_buffer())
+			if i[0] == "UNKNWON_FORMAT":
+				f.put_32(0)
+			else:
+				f.put_data(i[0].to_ascii_buffer())
 			align_4.call()
 		f.put_32(4607826)
 		
@@ -226,7 +244,7 @@ func save_file(path:String,encrypted:bool) -> void:
 		f.put_32(FLAG_INFO[2]) #oh no.... FLAGS!!!!!
 		f.put_32(FLAG_INFO[3]) #oh no.... FLAGS!!!!!
 		f.put_32(FLAG_INFO[4]) #oh no.... FLAGS!!!!!
-		
+		#align_8.call()
 		
 		for i:Array in dat_data_array:
 			f.put_data(i[1])
