@@ -165,7 +165,7 @@ class ExportMD(Operator, ExportHelper):
 					self.report({'ERROR'}, f"The selected skeleton's bone " + name + " is not in indexed mode. Delete it or rename it as a number.")
 					return {'CANCELLED'}
 
-			export_model(file_path, self, skeleton, child_meshes)
+			export_model(file_path, self, skeleton, child_meshes, self.PS2)
 			
 		else: #export a MDB file
 			for mod in active_object.modifiers:
@@ -181,7 +181,7 @@ class ExportMD(Operator, ExportHelper):
 								return {'CANCELLED'}
 
 						with open(file_path, "wb") as file:
-							export_mdb(file ,self, mod.object, active_object)
+							export_mdb(file ,self, mod.object, active_object, self.PS2)
 
 
 						break
@@ -191,7 +191,7 @@ class ExportMD(Operator, ExportHelper):
 		return {'FINISHED'}
 		
 
-def export_model(file_path,self,armature, mesh_array):
+def export_model(file_path,self,armature, mesh_array, PS2):
 	with open(file_path, "wb") as file:
 		file.write(b"scr\0")
 		file.write(struct.pack("<I", 0))
@@ -206,7 +206,7 @@ def export_model(file_path,self,armature, mesh_array):
 		data_offset = []
 		for mesh in mesh_array:
 			data_offset.append(file.tell())
-			export_mdb(file, self,armature,mesh)
+			export_mdb(file, self,armature,mesh, PS2)
 
 		for i in range(0,len(data_offset)):
 			obj_offset = file.tell()
@@ -236,7 +236,7 @@ def export_model(file_path,self,armature, mesh_array):
 
 
 
-def export_mdb(file,self,armature, mesh):
+def export_mdb(file,self,armature, mesh, PS2):
 	bpy.ops.object.mode_set(mode='OBJECT')
 	bpy.context.view_layer.objects.active = armature
 	bpy.ops.object.mode_set(mode='EDIT')
@@ -553,25 +553,45 @@ def export_mdb(file,self,armature, mesh):
 
 			file.write(b"\0")
 			for b in bone_mapping:
-				#print(b)
-				file.write(struct.pack("<B", b[0]))
+				if PS2:
+					if b[0] * 4 > 255:
+						self.report({'ERROR'}, f"There's more than 63 bones in this model. Reduce the bone count.")
+						return {'CANCELLED'}
+					file.write(struct.pack("<B", int(round(b[0] * 4))))
+				else:
+					file.write(struct.pack("<B", b[0]))
 			align_4(file)
 			weights = [] #must be normalized
+			if PS2:
+				for b in range(0,len(bone_mapping)):
+					weight = math.floor(bone_mapping[b][1] * 100)
+					weights.append([b, weight])
 
-			for b in range(0,len(bone_mapping)):
-				weight = math.floor(bone_mapping[b][1] * 255)
-				weights.append([b, weight])
-
-			weights.sort(key=lambda v: v[1])
-			while sum(w[1] for w in weights) < 255:
-				weights[0][1] += 1
+				weights.sort(key=lambda v: v[1])
+				while sum(w[1] for w in weights) < 100:
+					weights[0][1] += 1
 
 
 
-			weights.sort(key=lambda v: v[0])
-			for w in weights:
-				file.write(struct.pack("<B", w[1]))
-			align_4(file)
+				weights.sort(key=lambda v: v[0])
+				for w in weights:
+					file.write(struct.pack("<B", w[1]))
+				align_4(file)
+			else:
+				for b in range(0,len(bone_mapping)):
+					weight = math.floor(bone_mapping[b][1] * 255)
+					weights.append([b, weight])
+
+				weights.sort(key=lambda v: v[1])
+				while sum(w[1] for w in weights) < 255:
+					weights[0][1] += 1
+
+
+
+				weights.sort(key=lambda v: v[0])
+				for w in weights:
+					file.write(struct.pack("<B", w[1]))
+				align_4(file)
 
 			
 
@@ -859,9 +879,14 @@ def import_mdb(armature, stream,self, type, name = "mesh",PS2=False):
 					bone_1 = str(round(struct.unpack("<B",stream.read(1))[0] / 4) + 1)
 					bone_2 = str(round(struct.unpack("<B",stream.read(1))[0] / 4) + 1)
 
-				weight_0 = struct.unpack("<B",stream.read(1))[0] / 255.0
-				weight_1 = struct.unpack("<B",stream.read(1))[0] / 255.0
-				weight_2 = struct.unpack("<B",stream.read(1))[0] / 255.0
+				if PS2 == False:
+					weight_0 = struct.unpack("<B",stream.read(1))[0] / 255.0
+					weight_1 = struct.unpack("<B",stream.read(1))[0] / 255.0
+					weight_2 = struct.unpack("<B",stream.read(1))[0] / 255.0
+				else:
+					weight_0 = struct.unpack("<B",stream.read(1))[0] / 100.0
+					weight_1 = struct.unpack("<B",stream.read(1))[0] / 100.0
+					weight_2 = struct.unpack("<B",stream.read(1))[0] / 100.0
 				stream.read(1)
 				weights.append((bone_0,bone_1,bone_2,weight_0,weight_1,weight_2))
 
