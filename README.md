@@ -32,5 +32,5 @@ Okami MD Studio is a tool for blender 4.3 that allows you to import okami models
 
 To learn more about the program's interface, i recommend watching this tutorial which shows how i ported a model for okami:
 
-[![](https://github.com/user-attachments/assets/89575c8f-cbf0-41b5-88b9-2bca84149741)](https://www.youtube.com/watch?v=-ad8dYWaFa0)
+[![](<img width="1318" height="748" alt="image" src="https://github.com/user-attachments/assets/36e80431-ad7f-4bb2-a9e1-f6b4587fc033" />)](https://www.youtube.com/watch?v=-ad8dYWaFa0)
 
