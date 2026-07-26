@@ -24,3 +24,13 @@ Datool is a tool made to manipulate container files from OkamiHD. This tool have
 To learn more about the program's interface, i recommend watching this tutorial which shows how to change skin textures using Datool:
 [![](https://github.com/user-attachments/assets/56a70c1b-825f-4ef1-8ff4-c686389ab9ef)](https://www.youtube.com/watch?v=ca5_WjOXNxc)
 
+# Okami MD Studio
+<img width="1058" height="784" alt="image" src="https://github.com/user-attachments/assets/87a5c7ff-250a-4a9a-adac-8887a817585c" />
+
+
+Okami MD Studio is a tool for blender 4.3 that allows you to import okami models and animations, and export okami models and animations
+
+To learn more about the program's interface, i recommend watching this tutorial which shows how i ported a model for okami:
+
+[![](https://github.com/user-attachments/assets/89575c8f-cbf0-41b5-88b9-2bca84149741)](https://www.youtube.com/watch?v=-ad8dYWaFa0)
+
