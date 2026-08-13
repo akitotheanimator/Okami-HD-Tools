@@ -319,38 +319,54 @@ def selectedfcurves(obj):
 
 
 # fCurves Main
-def fcurves_simplify(context, obj, options, fcurves):
-    # main vars
+def fcurves_simplify(context, obj, options, fcurves, only_selected=False):
     mode = options[0]
 
-    # get indices of selected fcurves
-    fcurve_sel = selectedfcurves(obj)
+    # Get the actual F-Curves that correspond to the data in `fcurves`
+    if only_selected:
+        fcurve_targets = [
+            fc for fc in obj.animation_data.action.fcurves
+            if fc.select
+        ]
+    else:
+        fcurve_targets = list(obj.animation_data.action.fcurves)
 
-    # go through fcurves
-    for fcurve_i, fcurve in enumerate(fcurves):
-        # test if fcurve is long enough
-        if len(fcurve) >= 3:
-            # simplify spline according to mode
-            if mode == 'DISTANCE':
-                newVerts = simplify_RDP(fcurve, options)
+    # Make sure the snapshot and target list correspond
+    count = min(len(fcurves), len(fcurve_targets))
 
-            if mode == 'CURVATURE':
-                newVerts = simplypoly(fcurve, options)
+    for fcurve_i in range(count):
+        fcurve_data = fcurves[fcurve_i]
+        fcurve = fcurve_targets[fcurve_i]
 
-            # convert indices into vectors3D
-            newPoints = []
+        # Ignore curves with fewer than 3 points
+        if len(fcurve_data) < 3:
+            continue
 
-            # this is different from the main() function for normal curves, different api...
-            for v in newVerts:
-                newPoints.append(fcurve[v])
+        # Simplify
+        if mode == 'DISTANCE':
+            newVerts = simplify_RDP(fcurve_data, options)
+        elif mode == 'CURVATURE':
+            newVerts = simplypoly(fcurve_data, options)
+        else:
+            continue
 
-            # remove all points from curve first
-            for i in range(len(fcurve) - 1, 0, -1):
-                fcurve_sel[fcurve_i].keyframe_points.remove(fcurve_sel[fcurve_i].keyframe_points[i])
-            # put newPoints into fcurve
-            for v in newPoints:
-                fcurve_sel[fcurve_i].keyframe_points.insert(frame=v[0], value=v[1])
-    return
+        # Build the new points
+        newPoints = [fcurve_data[v] for v in newVerts]
+
+        # Remove existing keyframes
+        # Remove backwards so indices remain valid
+        for i in range(len(fcurve.keyframe_points) - 1, -1, -1):
+            fcurve.keyframe_points.remove(fcurve.keyframe_points[i])
+
+        # Insert simplified keyframes
+        for v in newPoints:
+            fcurve.keyframe_points.insert(
+                frame=v[0],
+                value=v[1]
+            )
+
+        # Update the F-Curve
+        fcurve.update()
 
 
 # ### MENU append ###
